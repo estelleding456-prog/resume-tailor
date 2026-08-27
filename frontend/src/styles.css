@@ -62,7 +62,7 @@ button:disabled { cursor: wait; opacity: .55; }
 .user-message { margin-left: auto; border-radius: 10px 10px 2px 10px; background: #f0f0ed; }
 .assistant-message { margin-right: auto; border-radius: 10px 10px 10px 2px; background: #fafaf8; border: 1px solid #e7e7e3; }
 .composer { display: flex; gap: 8px; min-height: 70px; padding: 12px; border-top: 1px solid #e8e8e5; }
-.composer textarea { flex: 1; resize: none; border: 1px solid #ddd; border-radius: 5px; padding: 9px 10px; outline: none; font-size: 12px; }
+.composer textarea { flex: 1; resize: vertical; min-height: 48px; max-height: 220px; border: 1px solid #ddd; border-radius: 5px; padding: 9px 10px; outline: none; font-size: 12px; }
 .composer textarea:focus { border-color: #999; }
 .send-button { align-self: flex-end; }
 .preview-actions { display: flex; gap: 8px; }
@@ -85,7 +85,7 @@ button:disabled { cursor: wait; opacity: .55; }
 .resume-item-head { display: grid; grid-template-columns: 27% 46% 27%; gap: 4px; font-family: "SimHei", "Microsoft YaHei", sans-serif; font-weight: 700; }
 .resume-item-head strong:nth-child(2) { text-align: center; }
 .resume-item-head strong:nth-child(3) { text-align: right; }
-.resume-item-head.compact { display: flex; align-items: baseline; gap: 6px; }
+.resume-item-head.compact { display: flex; align-items: baseline; gap: 6px; font-family: inherit; }
 .resume-item-head.compact strong { white-space: nowrap; flex: 0 0 auto; }
 .resume-item-head.compact span { text-align: left; font-weight: 400; font-family: inherit; }
 .resume-paper [contenteditable="true"] { border-radius: 2px; outline: none; }
