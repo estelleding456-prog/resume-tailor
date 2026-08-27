@@ -21,6 +21,11 @@ function EditableText({ value, editable, onCommit, className }: { value: string;
   return <span className={className} contentEditable={editable} suppressContentEditableWarning onBlur={(event) => { if (editable && event.currentTarget.textContent !== value) onCommit(event.currentTarget.textContent ?? '') }}>{value}</span>
 }
 
+function isSubhead(text: string): boolean {
+  const t = String(text ?? '').trim()
+  return t.length > 0 && t.length <= 16 && !t.includes('：') && !t.includes(':') && !/[。；！？，、]/.test(t)
+}
+
 function renderPlain(text: string): string {
   return String(text ?? '')
     .replace(/```[\s\S]*?```/g, (m) => m.replace(/```/g, '').trim())
@@ -47,10 +52,10 @@ function ResumePaper({ structured, assets, template, editable, onChange }: { str
     <header className="resume-header"><div className="resume-text"><h2 style={{ fontSize: `${template.name_font_size ?? 18}pt` }}><EditableText value={structured.header.name} editable={editable} onCommit={(v) => change((n) => { n.header.name = v })} /></h2><p><EditableText value={structured.header.contact} editable={editable} onCommit={(v) => change((n) => { n.header.contact = v })} /></p></div>{assets[0] && <img className="resume-photo" style={{ width: `${pw}mm`, height: `${ph}mm` }} src={assets[0].data_url} alt="简历照片" />}</header>
     {structured.sections.map((section, si) => <section className="resume-section" key={`${section.title}-${si}`}>
       <h3 style={{ fontSize: `${template.section_font_size ?? 12}pt` }}><EditableText value={section.title} editable={editable} onCommit={(v) => change((n) => { n.sections[si].title = v })} /></h3>
-      {section.paragraphs.map((paragraph, pi) => <p key={`${pi}-${paragraph}`}><EditableLine value={paragraph} editable={editable} onCommit={(v) => change((n) => { n.sections[si].paragraphs[pi] = v })} /></p>)}
-      {section.items.map((item, ii) => <div className="resume-item" key={`${item.date}-${ii}`}><div className={`resume-item-head${item.heading && !item.subheading ? ' compact' : ''}`}>
+      {section.paragraphs.map((paragraph, pi) => <p key={`${pi}-${paragraph}`} className={isSubhead(paragraph) ? 'subhead' : undefined}>{isSubhead(paragraph) ? <EditableText value={paragraph} editable={editable} onCommit={(v) => change((n) => { n.sections[si].paragraphs[pi] = v })} /> : <EditableLine value={paragraph} editable={editable} onCommit={(v) => change((n) => { n.sections[si].paragraphs[pi] = v })} />}</p>)}
+      {section.items.map((item, ii) => { const hasDate = (item.date ?? '').trim() !== ''; const isSubItem = !!item.heading && !item.subheading && !hasDate && item.body?.length; return <div className="resume-item" key={`${item.date}-${ii}`}>{isSubItem ? <p className="subhead"><EditableText value={item.heading} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].heading = v })} /></p> : <div className={`resume-item-head${item.heading && !item.subheading ? ' compact' : ''}`}>
         {item.heading && !item.subheading ? <><strong><EditableText value={item.date} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].date = v })} /></strong><span><EditableText value={item.heading} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].heading = v })} /></span></> : (['date', 'heading', 'subheading'] as const).map((field) => <strong key={field}><EditableText value={item[field]} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii][field] = v })} /></strong>)}
-      </div>{item.body.map((line, bi) => <p key={`${bi}-${line}`}><EditableLine value={line} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].body[bi] = v })} /></p>)}</div>)}
+      </div>}{item.body.map((line, bi) => <p key={`${bi}-${line}`} className={isSubhead(line) ? 'subhead' : undefined}>{isSubhead(line) ? <EditableText value={line} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].body[bi] = v })} /> : <EditableLine value={line} editable={editable} onCommit={(v) => change((n) => { n.sections[si].items[ii].body[bi] = v })} />}</p>)}</div>})}
     </section>)}
   </article>
 }

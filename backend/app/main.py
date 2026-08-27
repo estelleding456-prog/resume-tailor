@@ -382,20 +382,61 @@ def _render_pdf_and_count(html: str, pdf_path: Path) -> int:
 
 
 def _fit_template(content: dict[str, Any], template: dict[str, Any], assets: list[dict[str, Any]], target: int, pdf_path: Path) -> tuple[dict[str, Any], int]:
-    """两遍式版式闭环：首遍渲染后若超页，按压缩阶梯逐步收紧行距/间距/字号，直到页数达标。"""
+    """两遍式版式闭环：超页时压缩，太短时撑满。
+    1) 首遍渲染后若超页，按压缩阶梯收紧行距/间距/字号到页数达标；
+    2) 若仍一页但底部留白过多，反向放大字号/行距/间距把内容撑满，避免视觉太空。
+    """
+    def render_count(t: dict[str, Any]) -> int:
+        return _render_pdf_and_count(render_resume_html(content, t, assets), pdf_path)
+
+    def content_bottom(t: dict[str, Any]) -> float:
+        render_count(t)
+        import fitz
+        with fitz.open(pdf_path) as doc:
+            if doc.page_count > 1:
+                return 1e9
+            return max((b[3] for b in doc[0].get_text('blocks')), default=0.0)
+
+    # 1) 压缩（超页）
     steps = [
         {"line_height": round(max(1.15, float(template.get("line_height", 1.55)) - 0.12), 2), "section_margin": 0.6, "item_margin": 0.3, "para_margin": 0.18},
         {"line_height": round(max(1.05, float(template.get("line_height", 1.55)) - 0.24), 2), "section_margin": 0.3, "item_margin": 0.15, "para_margin": 0.08},
         {"line_height": round(max(1.0, float(template.get("line_height", 1.55)) - 0.35), 2), "section_margin": 0.1, "item_margin": 0.05, "para_margin": 0.03, "font_size": round(float(template.get("font_size", 10.5)) - 0.5, 2)},
     ]
     current = template
-    page_count = _render_pdf_and_count(render_resume_html(content, current, assets), pdf_path)
+    page_count = render_count(current)
     for over in steps:
         if page_count <= target:
             break
         candidate = {**current, **over}
-        page_count = _render_pdf_and_count(render_resume_html(content, candidate, assets), pdf_path)
+        page_count = render_count(candidate)
         current = candidate
+
+    # 2) 撑满（一页内底部留白过多时放大）
+    if page_count == target == 1:
+        page_h = 842.0  # A4 pt
+        mb = float(current.get("margin_bottom", 14)) / 25.4 * 72
+        target_bottom = page_h - mb - (14.0 / 25.4 * 72)  # 距页底留约14mm
+        base_font = float(current.get("font_size", 10.5))
+        base_lh = float(current.get("line_height", 1.55))
+        base_sm = float(current.get("section_margin", 1.0))
+        base_im = float(current.get("item_margin", 0.55))
+        base_pm = float(current.get("para_margin", 0.35))
+        fill_steps = [
+            {"line_height": round(min(2.1, base_lh + 0.12), 2), "section_margin": round(min(4.0, base_sm + 0.6), 2), "item_margin": round(min(2.5, base_im + 0.35), 2), "para_margin": round(min(1.5, base_pm + 0.2), 2)},
+            {"line_height": round(min(2.3, base_lh + 0.24), 2), "section_margin": round(min(5.0, base_sm + 1.2), 2), "item_margin": round(min(3.5, base_im + 0.7), 2), "para_margin": round(min(2.0, base_pm + 0.4), 2)},
+            {"font_size": round(min(base_font + 1.2, base_font + 1.2), 2)},
+        ]
+        for fs in fill_steps:
+            bottom = content_bottom(current)
+            if bottom >= target_bottom:
+                break
+            candidate = {**current, **fs}
+            cbottom = content_bottom(candidate)
+            if cbottom >= 1e9 or cbottom > page_h - mb:
+                break  # 撑满会溢页，放弃
+            current = candidate
+        page_count = render_count(current)
     return current, page_count
 
 
