@@ -55,7 +55,7 @@ def normalize_resume_content(value: Any) -> dict[str, Any]:
         title = _text(raw_section.get("title"))
         if title or paragraphs or items:
             sec = {"title": title or "其他信息", "paragraphs": paragraphs, "items": items}
-            sec["section_type"] = raw_section.get("section_type") if raw_section.get("section_type") in {"experience", "compact", "labeled_list"} else classify_section_type(sec)
+            sec["section_type"] = classify_section_type(sec)
             sec["style_ref"] = _text(raw_section.get("style_ref"))
             sections.append(sec)
     return {"header": header, "sections": sections}

@@ -28,7 +28,7 @@ def _render_para(value: Any) -> str:
 
 
 def _resolve_section_type(section: dict[str, Any], sections: list[dict[str, Any]]) -> str:
-    """解析板块最终渲染类型：优先 style_ref 引用原板块，否则用自身 section_type。"""
+    """板块最终渲染类型：确定性。优先 style_ref 引用原板块，否则始终按条目结构归类（不信 AI 填写的 section_type）。"""
     sr = str(section.get("style_ref", "")).strip()
     if sr in {"experience", "compact", "labeled_list"}:
         return sr
@@ -36,12 +36,7 @@ def _resolve_section_type(section: dict[str, Any], sections: list[dict[str, Any]
         for other in sections:
             title = str(other.get("title", ""))
             if title and (sr in title or title in sr):
-                t = str(other.get("section_type", ""))
-                if t in {"experience", "compact", "labeled_list"}:
-                    return t
-    t = str(section.get("section_type", ""))
-    if t in {"experience", "compact", "labeled_list"}:
-        return t
+                return classify_section_type(other)
     return classify_section_type(section)
 
 

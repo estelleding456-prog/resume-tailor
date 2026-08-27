@@ -21,13 +21,19 @@ h1 { margin: 0; font-size: 26px; letter-spacing: -.03em; }
 .workspace { display: flex; height: calc(100vh - 118px); min-height: 620px; }
 .left-column { display: flex; flex: 0 0 36%; min-width: 360px; flex-direction: column; overflow: hidden; }
 .context-panel { flex: 0 0 50%; min-height: 190px; }
-.chat-panel { flex: 1 1 0; min-height: 130px; }
+.chat-panel { flex: 1 1 0; min-height: 130px; display: flex; flex-direction: column; }
 .preview-panel { flex: 1; min-width: 520px; display: flex; flex-direction: column; background: #fff; border: 1px solid #dededb; overflow: hidden; }
 .panel { background: #fff; border: 1px solid #dededb; overflow: hidden; }
 .panel.context-panel { overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; }
 .context-panel > .panel-heading { position: sticky; top: 0; z-index: 2; background: #fff; }
 .panel-heading { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid #e8e8e5; font-size: 13px; font-weight: 650; }
 .preview-heading { padding-left: 24px; background: #fff; }
+.preview-title { font-weight: 600; }
+.view-toggle { display: inline-flex; margin-left: 18px; border: 1px solid #d6d6d2; border-radius: 6px; overflow: hidden; }
+.view-toggle button { border: 0; background: #f5f5f1; padding: 4px 14px; font-size: 12px; cursor: pointer; color: #555; }
+.view-toggle button + button { border-left: 1px solid #d6d6d2; }
+.view-toggle button.active { background: #2b2b2b; color: #fff; }
+.view-toggle button:disabled { opacity: .45; cursor: not-allowed; }
 .muted { color: #999; font-size: 11px; font-weight: 400; }
 .ghost-button, .primary-button, .send-button { border: 0; border-radius: 5px; padding: 8px 12px; font-size: 12px; }
 .ghost-button { color: #555; background: #f1f1ef; }
@@ -56,8 +62,9 @@ button:disabled { cursor: wait; opacity: .55; }
 .splitter { background: #dededb; flex: 0 0 8px; user-select: none; touch-action: none; }
 .splitter.vertical { cursor: col-resize; }
 .splitter.horizontal { cursor: row-resize; }
-.splitter.composer-splitter { flex: 0 0 6px; background: #e9e9e6; }
-.chat-body { height: calc(100% - 122px); overflow: auto; padding: 18px; }
+.splitter.composer-splitter { flex: 0 0 8px; background: #d6d6d2; cursor: row-resize; position: relative; }
+.splitter.composer-splitter::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 3px; border-radius: 2px; background: #b5b5b0; }
+.chat-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 18px; }
 .chat-placeholder { color: #999; font-size: 13px; line-height: 1.7; }
 .user-message, .assistant-message { max-width: 86%; margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
 .user-message { margin-left: auto; border-radius: 10px 10px 2px 10px; background: #f0f0ed; }
@@ -67,6 +74,9 @@ button:disabled { cursor: wait; opacity: .55; }
 .composer textarea:focus { border-color: #999; }
 .send-button { align-self: flex-end; }
 .preview-actions { display: flex; gap: 8px; }
+.pdf-preview { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.pdf-preview img { max-width: 100%; width: 700px; height: auto; box-shadow: 0 5px 24px rgba(0,0,0,.12); background: #fff; }
+.pdf-status { color: #777; font-size: 12px; }
 .resume-placeholder { flex: 1; overflow: auto; padding: 32px; background: #e9e9e6; display: flex; flex-direction: column; align-items: center; }
 .preview-image { max-width: 100%; width: 720px; height: auto; box-shadow: 0 5px 24px rgba(0,0,0,.12); background: #fff; }
 .original-pdf { display: block; width: 100%; height: 100%; min-height: 900px; border: 0; background: #fff; }
