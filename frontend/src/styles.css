@@ -74,7 +74,7 @@ button:disabled { cursor: wait; opacity: .55; }
 .resume-header .resume-text { flex: 1; text-align: center; }
 .resume-photo { object-fit: cover; margin-left: 6px; flex: 0 0 auto; border-radius: 2px; }
 .resume-header h2 { margin: 0 0 3px; font-size: 24px; letter-spacing: .08em; }
-.resume-header p { margin: 0; color: #555; font-size: 12px; }
+.resume-header p { margin: 0; color: #555; }
 .resume-section { margin-top: 4px; }
 .resume-header + .resume-section { margin-top: 0; }
 .resume-section h3 { margin: 0 0 3px; padding-bottom: 2px; border-bottom: 1.5px solid #222; font-size: 16px; }
