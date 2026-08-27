@@ -287,6 +287,7 @@ def generate(payload: GenerateIn) -> dict:
         "preferences": _preferences(),
         "job_description": payload.jd_text,
         "conversation": payload.history,
+        "max_total_chars": len(resume.get("text", "") or ""),
     }
     try:
         generated = parse_json_object(chat_completion(_model_config(), [

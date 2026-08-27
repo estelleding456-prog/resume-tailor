@@ -83,9 +83,9 @@ button:disabled { cursor: wait; opacity: .55; }
 .resume-item-head { display: grid; grid-template-columns: 27% 46% 27%; gap: 4px; font-size: 12px; }
 .resume-item-head strong:nth-child(2) { text-align: center; }
 .resume-item-head strong:nth-child(3) { text-align: right; }
-.resume-item-head.compact { grid-template-columns: 16% 84%; }
-.resume-item-head.compact strong { white-space: nowrap; }
-.resume-item-head.compact span { text-align: left; font-size: 9pt; }
+.resume-item-head.compact { display: flex; align-items: baseline; gap: 6px; }
+.resume-item-head.compact strong { white-space: nowrap; flex: 0 0 auto; }
+.resume-item-head.compact span { text-align: left; }
 .resume-paper [contenteditable="true"] { border-radius: 2px; outline: none; }
 .resume-paper [contenteditable="true"]:hover { background: #f5f5f1; }
 .resume-paper [contenteditable="true"]:focus { background: #fffbe8; box-shadow: 0 0 0 2px #e7dfb5; }
