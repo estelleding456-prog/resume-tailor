@@ -1,0 +1,23 @@
+# 运行时数据（本机用户数据，绝不提交）
+/data/
+*.db
+*.sqlite
+*.sqlite3
+.env
+resume-tailor.config.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.log
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# 系统
+.DS_Store
+Thumbs.db
