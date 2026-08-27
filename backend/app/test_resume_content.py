@@ -1,6 +1,6 @@
 import pytest
 
-from .resume_content import apply_date_order, apply_structure_mode, normalize_resume_content, resume_to_text, safe_output_name
+from .resume_content import apply_date_order, apply_structure_mode, classify_section_type, normalize_resume_content, resume_to_text, safe_output_name
 from .main import _clip_sentence
 
 
@@ -51,6 +51,13 @@ def test_reorder_keeps_new_sections_not_dropped():
     titles = [section["title"] for section in result["sections"]]
     assert "AI与法律工作流" in titles  # 新增板块必须保留，不得静默丢弃
     assert any("Agent技能库" in p for s in result["sections"] for p in s["paragraphs"])
+
+
+def test_classify_section_type_is_deterministic():
+    assert classify_section_type({"items": [{"date": "2025.01", "heading": "A", "subheading": "B", "body": []}]}) == "experience"
+    assert classify_section_type({"items": [{"date": "2025.01", "heading": "A", "subheading": "", "body": []}]}) == "compact"
+    assert classify_section_type({"items": [{"date": "", "heading": "技能库", "subheading": "", "body": ["正文"]}]}) == "labeled_list"
+    assert classify_section_type({"paragraphs": ["纯段落"], "items": []}) == "labeled_list"
 
 
 def test_clip_sentence_breaks_at_sentence_boundary_not_mid_word():

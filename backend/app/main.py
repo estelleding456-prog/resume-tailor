@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -451,6 +451,48 @@ def _fit_template(content: dict[str, Any], template: dict[str, Any], assets: lis
             current = candidate
         page_count = render_count(current)
     return current, page_count
+
+
+@app.get("/api/versions/{version_id}/preview.png")
+def version_preview_png(version_id: str) -> Response:
+    with connection() as conn:
+        row = conn.execute("SELECT content_json FROM resume_version WHERE id = ?", (version_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="简历版本不存在。")
+    content = json.loads(row["content_json"])
+    resume = _master_resume()
+    assets = resume.get("assets", [])
+    page_limit = _preferences()["page_limit"]
+    target = 1 if page_limit == "one" else (2 if page_limit == "two" else 999)
+    import tempfile
+    import pymupdf as fitz
+    template = _template_config()
+    with tempfile.TemporaryDirectory() as td:
+        pdf_path = Path(td) / "preview.pdf"
+        html = render_resume_html(content, template, assets)
+        try:
+            if target < 999:
+                fitted, _ = _fit_template(content, template, assets, target, pdf_path)
+            else:
+                _render_pdf_and_count(html, pdf_path)
+        except Exception:
+            _render_pdf_and_count(html, pdf_path)
+        with fitz.open(pdf_path) as doc:
+            if doc.page_count == 0:
+                raise HTTPException(status_code=500, detail="预览生成失败。")
+            if doc.page_count == 1:
+                png = doc[0].get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False).tobytes("png")
+            else:
+                pixs = [doc[i].get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False) for i in range(doc.page_count)]
+                w = max(p.width for p in pixs)
+                total = sum(p.height for p in pixs)
+                canvas = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, w, total))
+                y = 0
+                for p in pixs:
+                    canvas.copy(p, fitz.IRect(0, y, w, y + p.height))
+                    y += p.height
+                png = canvas.tobytes("png")
+    return Response(content=png, media_type="image/png", headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/versions/{version_id}/export")

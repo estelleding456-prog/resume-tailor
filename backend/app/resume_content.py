@@ -14,6 +14,24 @@ def _start_date(value: str) -> tuple[int, int]:
     return (int(match.group(1)), int(match.group(2))) if match else (0, 0)
 
 
+def classify_section_type(section: dict[str, Any]) -> str:
+    """根据条目结构确定性判断板块类型。
+    - experience: 有条目且带日期+副标题（如实习经历 日期|单位|岗位）
+    - compact: 有条目带日期但无副标题（如在校经历 日期+文本）
+    - labeled_list: 无日期条目或纯段落（如技能/AI工作流模块）
+    """
+    items = section.get("items", [])
+    if not items:
+        return "labeled_list"
+    has_date = any(str(it.get("date", "")).strip() for it in items)
+    has_sub = any(str(it.get("subheading", "")).strip() for it in items)
+    if has_date and has_sub:
+        return "experience"
+    if has_date:
+        return "compact"
+    return "labeled_list"
+
+
 def normalize_resume_content(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("简历内容必须是对象。")
@@ -36,7 +54,10 @@ def normalize_resume_content(value: Any) -> dict[str, Any]:
             })
         title = _text(raw_section.get("title"))
         if title or paragraphs or items:
-            sections.append({"title": title or "其他信息", "paragraphs": paragraphs, "items": items})
+            sec = {"title": title or "其他信息", "paragraphs": paragraphs, "items": items}
+            sec["section_type"] = raw_section.get("section_type") if raw_section.get("section_type") in {"experience", "compact", "labeled_list"} else classify_section_type(sec)
+            sec["style_ref"] = _text(raw_section.get("style_ref"))
+            sections.append(sec)
     return {"header": header, "sections": sections}
 
 

@@ -4,6 +4,8 @@ from html import escape
 import re
 from typing import Any
 
+from .resume_content import classify_section_type
+
 DEFAULT_TEMPLATE = {"font_size": 10.5, "name_font_size": 18, "section_font_size": 12, "font_family": "Microsoft YaHei", "line_height": 1.55, "margin_top": 14, "margin_right": 16, "margin_bottom": 14, "margin_left": 16, "section_margin": 1.0, "item_margin": 0.55, "para_margin": 0.35, "photo_width_mm": 22, "photo_height_mm": 29}
 
 
@@ -25,6 +27,58 @@ def _render_para(value: Any) -> str:
     return f"<p>{_rich_line(text)}</p>"
 
 
+def _resolve_section_type(section: dict[str, Any], sections: list[dict[str, Any]]) -> str:
+    """解析板块最终渲染类型：优先 style_ref 引用原板块，否则用自身 section_type。"""
+    sr = str(section.get("style_ref", "")).strip()
+    if sr in {"experience", "compact", "labeled_list"}:
+        return sr
+    if sr:
+        for other in sections:
+            title = str(other.get("title", ""))
+            if title and (sr in title or title in sr):
+                t = str(other.get("section_type", ""))
+                if t in {"experience", "compact", "labeled_list"}:
+                    return t
+    t = str(section.get("section_type", ""))
+    if t in {"experience", "compact", "labeled_list"}:
+        return t
+    return classify_section_type(section)
+
+
+def _render_section(section: dict[str, Any], stype: str) -> str:
+    chunks = [f"<section class='resume-section'><h3>{escape(str(section.get('title', '')))}</h3>"]
+    paras = section.get("paragraphs", [])
+    items = section.get("items", [])
+    if stype == "experience":
+        for item in items:
+            chunks.append("<div class='resume-item'><div class='resume-item-head'>")
+            chunks.append(f"<strong>{escape(str(item.get('date', '')))}</strong><strong>{escape(str(item.get('heading', '')))}</strong><strong>{escape(str(item.get('subheading', '')))}</strong></div>")
+            for line in item.get("body", []):
+                chunks.append(_render_para(line))
+            chunks.append("</div>")
+    elif stype == "compact":
+        for item in items:
+            chunks.append("<div class='resume-item'><div class='resume-item-head compact'>")
+            chunks.append(f"<strong>{escape(str(item.get('date', '')))}</strong><span>{escape(str(item.get('heading', '')))}</span></div>")
+            for line in item.get("body", []):
+                chunks.append(_render_para(line))
+            chunks.append("</div>")
+    else:  # labeled_list
+        for item in items:
+            heading = str(item.get("heading", "")).strip()
+            if heading:
+                chunks.append(f"<p class='subhead'><strong>{escape(heading)}</strong></p>")
+            for line in item.get("body", []):
+                chunks.append(_render_para(line))
+        for para in paras:
+            chunks.append(_render_para(para))
+    if stype in ("experience", "compact") and paras:
+        for para in paras:
+            chunks.append(_render_para(para))
+    chunks.append("</section>")
+    return "".join(chunks)
+
+
 def render_resume_html(content: dict[str, Any], template: dict[str, Any] | None = None, assets: list[dict[str, Any]] | None = None) -> str:
     template = {**DEFAULT_TEMPLATE, **(template or {})}
     header = content.get("header", {})
@@ -34,32 +88,8 @@ def render_resume_html(content: dict[str, Any], template: dict[str, Any] | None 
     photo_html = f"<img class='resume-photo' style='width:{pw}mm;height:{ph}mm' src='{escape(str(assets[0].get('data_url', '')))}' alt='简历照片'>" if assets and assets[0].get("data_url") else ""
     section_html: list[str] = []
     for section in sections:
-        chunks = [f"<section class='resume-section'><h3>{escape(str(section.get('title', '')))}</h3>"]
-        for paragraph in section.get("paragraphs", []):
-            chunks.append(_render_para(paragraph))
-        for item in section.get("items", []):
-            chunks.append("<div class='resume-item'>")
-            date = str(item.get("date", "")).strip()
-            heading = str(item.get("heading", "")).strip()
-            subheading = str(item.get("subheading", "")).strip()
-            body = item.get("body", [])
-            if heading and not subheading and not date and body:
-                # 子标题 + 正文（如 AI 模块），小标题加粗、无日期
-                chunks.append(f"<p class='subhead'><strong>{escape(heading)}</strong></p>")
-                for line in body:
-                    chunks.append(_render_para(line))
-            elif heading and not subheading and date:
-                # 日期 + 文本 紧凑行（在校经历）
-                chunks.append(f"<div class='resume-item-head compact'><strong>{escape(date)}</strong><span>{escape(heading)}</span></div>")
-                for line in body:
-                    chunks.append(_render_para(line))
-            else:
-                chunks.append(f"<div class='resume-item-head'><strong>{escape(date)}</strong><strong>{escape(heading)}</strong><strong>{escape(subheading)}</strong></div>")
-                for line in body:
-                    chunks.append(_render_para(line))
-            chunks.append("</div>")
-        chunks.append("</section>")
-        section_html.append("".join(chunks))
+        stype = _resolve_section_type(section, sections)
+        section_html.append(_render_section(section, stype))
     font_size = template["font_size"]
     name_font_size = template.get("name_font_size", 18)
     section_font_size = template.get("section_font_size", 12)
