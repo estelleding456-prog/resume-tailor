@@ -77,12 +77,12 @@ button:disabled { cursor: wait; opacity: .55; }
 .resume-header p { margin: 0; color: #555; }
 .resume-section { margin-top: 4px; }
 .resume-header + .resume-section { margin-top: 0; }
-.resume-section h3 { margin: 0 0 3px; padding-bottom: 2px; border-bottom: 1.5px solid #222; font-size: 16px; font-family: "Microsoft YaHei", "SimHei", sans-serif; }
+.resume-section h3 { margin: 0 0 3px; padding-bottom: 2px; border-bottom: 1.5px solid #222; font-size: 16px; font-family: "SimHei", "Microsoft YaHei", sans-serif; }
 .resume-section p { margin: 1px 0; text-wrap: balance; }
-.resume-section p.subhead { margin: 5px 0 1px; font-weight: 700; font-family: "Microsoft YaHei", "SimHei", sans-serif; }
-.resume-paper strong { font-family: "Microsoft YaHei", "SimHei", sans-serif; font-weight: 700; }
+.resume-section p.subhead { margin: 5px 0 1px; font-weight: 700; font-family: "SimHei", "Microsoft YaHei", sans-serif; }
+.resume-paper strong { font-family: "SimHei", "Microsoft YaHei", sans-serif; font-weight: 700; }
 .resume-item { margin: 2px 0; }
-.resume-item-head { display: grid; grid-template-columns: 27% 46% 27%; gap: 4px; font-family: "Microsoft YaHei", "SimHei", sans-serif; font-weight: 700; }
+.resume-item-head { display: grid; grid-template-columns: 27% 46% 27%; gap: 4px; font-family: "SimHei", "Microsoft YaHei", sans-serif; font-weight: 700; }
 .resume-item-head strong:nth-child(2) { text-align: center; }
 .resume-item-head strong:nth-child(3) { text-align: right; }
 .resume-item-head.compact { display: flex; align-items: baseline; gap: 6px; }

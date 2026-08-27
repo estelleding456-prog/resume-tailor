@@ -133,6 +133,18 @@ def _render_version(content: dict[str, Any]) -> str:
     return render_resume_html(content, _template_config(), resume.get("assets", []))
 
 
+def _approx_chars_per_line() -> int:
+    """估算正文每行可容纳的中文字数，用于让生成内容尽量写成整行，减少孤行。"""
+    try:
+        t = _template_config()
+    except Exception:
+        return 50
+    ml = float(t.get("margin_left", 14)); mr = float(t.get("margin_right", 14))
+    fs = float(t.get("font_size", 10.5))
+    content_width_pt = (210.0 - ml - mr) / 25.4 * 72.0
+    return max(20, int(content_width_pt / max(fs, 8.0)))
+
+
 def _clip_sentence(text: str, limit: int = 100) -> str:
     text = text.strip()
     if len(text) <= limit:
@@ -291,6 +303,7 @@ def generate(payload: GenerateIn) -> dict:
         "job_description": payload.jd_text,
         "conversation": payload.history,
         "max_total_chars": len(resume.get("text", "") or ""),
+        "approx_chars_per_line": _approx_chars_per_line(),
     }
     try:
         generated = parse_json_object(chat_completion(_model_config(), [
