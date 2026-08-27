@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS experience_library (
 CREATE TABLE IF NOT EXISTS resume_preferences (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     page_limit TEXT NOT NULL DEFAULT 'one',
-    structure_mode TEXT NOT NULL DEFAULT 'reorder',
+    structure_mode TEXT NOT NULL DEFAULT 'rebuild',
     layout_mode TEXT NOT NULL DEFAULT 'adaptive',
     date_order TEXT NOT NULL DEFAULT 'desc',
     profile_text TEXT NOT NULL DEFAULT '',

@@ -37,11 +37,20 @@ def test_date_order_is_deterministic_and_markdown_labels_are_normalized():
     assert ordered["sections"][0]["items"][1]["body"][0] == "尽职调查：内容"
 
 
-def test_preserve_structure_restores_baseline_section_order():
+def test_preserve_structure_keeps_new_sections_and_baseline_order():
     baseline = {"header": {}, "sections": [{"title": "教育经历", "paragraphs": [], "items": []}, {"title": "实习经历", "paragraphs": [], "items": []}]}
     generated = {"header": {}, "sections": [{"title": "实习经历", "paragraphs": ["x"], "items": []}, {"title": "教育背景", "paragraphs": ["y"], "items": []}, {"title": "新增板块", "paragraphs": [], "items": []}]}
     result = apply_structure_mode(generated, baseline, "preserve")
-    assert [section["title"] for section in result["sections"]] == ["教育背景", "实习经历"]
+    assert [section["title"] for section in result["sections"]] == ["教育背景", "实习经历", "新增板块"]
+
+
+def test_reorder_keeps_new_sections_not_dropped():
+    baseline = {"header": {}, "sections": [{"title": "教育经历", "paragraphs": [], "items": []}, {"title": "相关技能", "paragraphs": [], "items": []}]}
+    generated = {"header": {}, "sections": [{"title": "教育经历", "paragraphs": [], "items": []}, {"title": "AI与法律工作流", "paragraphs": ["搭建Agent技能库"], "items": []}, {"title": "相关技能", "paragraphs": [], "items": []}]}
+    result = apply_structure_mode(generated, baseline, "reorder")
+    titles = [section["title"] for section in result["sections"]]
+    assert "AI与法律工作流" in titles  # 新增板块必须保留，不得静默丢弃
+    assert any("Agent技能库" in p for s in result["sections"] for p in s["paragraphs"])
 
 
 def test_clip_sentence_breaks_at_sentence_boundary_not_mid_word():

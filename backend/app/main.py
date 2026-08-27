@@ -16,7 +16,7 @@ from .db import connection, init_db
 from .documents import parse_document, parse_text_file, safe_filename, to_json
 from .html_renderer import render_resume_html
 from .prompts import CHAT_SYSTEM, EDIT_SYSTEM, GENERATE_SYSTEM, REVIEW_SYSTEM
-from .resume_content import apply_date_order, apply_structure_mode, normalize_resume_content, safe_output_name
+from .resume_content import apply_date_order, apply_structure_mode, normalize_resume_content, safe_output_name, structure_conflict_notes
 from .resume_ir import build_resume_ir
 from .settings import DATA_DIR
 
@@ -266,9 +266,12 @@ def chat(payload: ChatIn) -> dict:
     try:
         updated = apply_structure_mode(result.get("content"), previous, prefs["structure_mode"])
         updated = apply_date_order(updated, prefs["date_order"])
+        conflict_notes = structure_conflict_notes(updated, previous, prefs["structure_mode"])
     except ValueError as exc:
         raise HTTPException(status_code=502, detail=f"AI修改结果无效：{exc}") from exc
     html = _render_version(updated)
+    if conflict_notes:
+        message = (message + "\n" + "；".join(conflict_notes)) if message else "；".join(conflict_notes)
     with connection() as conn:
         conn.execute("""UPDATE resume_version SET previous_content_json = content_json, content_json = ?, html = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?""",
                      (json.dumps(updated, ensure_ascii=False), html, payload.version_id))

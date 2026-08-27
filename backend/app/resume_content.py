@@ -48,19 +48,42 @@ def _section_key(title: str) -> str:
 
 
 def apply_structure_mode(content: dict[str, Any], baseline: dict[str, Any], mode: str) -> dict[str, Any]:
+    """结构模式控制板块的排序与是否补回基线，但绝不静默丢弃内容。
+    - rebuild: 完全信任模型返回的板块（允许增删、合并、移动）。
+    - preserve: 保持基线顺序，新增板块追加到末尾；不删除基线板块。
+    - reorder: 保持模型顺序，新增板块保留，被删除的基线板块补回（只允许移动与新增，不允许删基线）。
+    """
     normalized = normalize_resume_content(content)
     if mode == "rebuild":
         return normalized
     base = normalize_resume_content(baseline)
-    allowed = [_section_key(section["title"]) for section in base["sections"]]
-    generated = {_section_key(section["title"]): section for section in normalized["sections"]}
+    base_keys = [_section_key(section["title"]) for section in base["sections"]]
+    base_by_key = {_section_key(section["title"]): section for section in base["sections"]}
+    gen_by_key = {_section_key(section["title"]): section for section in normalized["sections"]}
+    new_sections = [section for section in normalized["sections"] if _section_key(section["title"]) not in base_by_key]
+    missing_base = [base_by_key[key] for key in base_keys if key not in gen_by_key]
     if mode == "preserve":
-        normalized["sections"] = [generated.get(key, base["sections"][index]) for index, key in enumerate(allowed)]
+        ordered = [gen_by_key[key] if key in gen_by_key else base_by_key[key] for key in base_keys]
+        ordered += new_sections
+        normalized["sections"] = ordered
     else:
-        kept = [section for section in normalized["sections"] if _section_key(section["title"]) in allowed]
-        present = {_section_key(section["title"]) for section in kept}
-        normalized["sections"] = kept + [section for section in base["sections"] if _section_key(section["title"]) not in present]
+        normalized["sections"] = [section for section in normalized["sections"]] + missing_base
     return normalized
+
+
+def structure_conflict_notes(content: dict[str, Any], baseline: dict[str, Any], mode: str) -> list[str]:
+    if mode == "rebuild":
+        return []
+    base_keys = {_section_key(section["title"]) for section in normalize_resume_content(baseline)["sections"]}
+    gen_keys = {_section_key(section["title"]) for section in normalize_resume_content(content)["sections"]}
+    notes: list[str] = []
+    added = gen_keys - base_keys
+    removed = base_keys - gen_keys
+    if added:
+        notes.append(f"本次在“{mode}”偏好下新增了板块，已按你的明确要求保留。")
+    if removed:
+        notes.append(f"本次在“{mode}”偏好下未包含原板块，已保留。")
+    return notes
 
 
 def apply_date_order(content: dict[str, Any], order: str = "desc") -> dict[str, Any]:
